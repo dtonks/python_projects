@@ -1,4 +1,5 @@
 import pandas as pd
+import xlrd
 import requests
 import csv
 try:
