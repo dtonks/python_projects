@@ -1,5 +1,6 @@
 import requests
 import csv
+import js2py
 try:
     from BeautifulSoup import BeautifulSoup
 except ImportError:
@@ -7,8 +8,15 @@ except ImportError:
 
 def get_data(tail_number):
   html = f"https://registry.faa.gov/aircraftinquiry/NNum_Results.aspx?NNumbertxt={tail_number}"
-  page = requests.get(html)
-  soup = BeautifulSoup(page.content, 'html.parser')
+  try:
+    page = requests.get(html)
+    soup = BeautifulSoup(page.content, 'html.parser')
+    data['AircraftYear'] = soup.find(id="ctl00_content_Label17").get_text()
+  except AttributeError:
+    o_page = requests.get(html)
+    click_continue = 'function click_continue(html){ document.getElementById(\'ctl00_content_lbtnWarning\'.click()); }'
+    page = js2py.eval_js(click_continue(o_page))
+    soup = BeautifulSoup(page.content, 'html.parser')
 
   data = {}
   data['ID'] = ""
@@ -40,4 +48,4 @@ def results_csv(tail_numbers):
 # t = ['N223MK', 'N228DF', 'N846U', 'N31617', 'N942WG']
 # t = ['N6517A']
 
-results_csv(['N223MK', 'N228DF', 'N846U', 'N31617'])
+results_csv(['N942WG'])
