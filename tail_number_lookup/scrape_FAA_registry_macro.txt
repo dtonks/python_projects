@@ -1,0 +1,38 @@
+Private Sub CommandButton1_Click()
+    Dim IE As Object
+
+    ' Create InternetExplorer Object
+    Set IE = CreateObject("InternetExplorer.Application")
+
+    ' You can uncoment Next line To see form results
+    IE.Visible = False
+
+    ' Get data from selected cell and convert to string
+    ' tail_num = CStr(Range("A1").Value)
+    tail_num = CStr(ActiveCell.Value)
+    ' URL to get data from
+    IE.navigate "https://registry.faa.gov/aircraftinquiry/NNum_Results.aspx?NNumbertxt=" + CStr(tail_num)
+
+    ' Statusbar
+    Application.StatusBar = "Loading, Please wait..."
+
+    ' Wait while IE loading...
+    Do While IE.Busy
+        Application.Wait DateAdd("s", 1, Now)
+    Loop
+
+    Application.StatusBar = "Searching for value. Please wait..."
+
+    Dim dd As String
+    dd = IE.document.getElementById("ctl00_content_Label17").innerText
+
+    MsgBox "MFR Year for " + tail_num + " = " + dd
+
+    ' Show IE
+    IE.Visible = False
+
+    ' Clean up
+    Set IE = Nothing
+
+    Application.StatusBar = ""
+End Sub
