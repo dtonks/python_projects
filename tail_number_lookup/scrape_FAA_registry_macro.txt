@@ -1,38 +1,73 @@
-Private Sub CommandButton1_Click()
-    Dim IE As Object
+Sub GetMfrYear()
 
+    Dim IE As Object
+    Dim cel As Range
+    Dim selectedRange As Range
+    Dim i As Integer
+    Dim output As String
+    
     ' Create InternetExplorer Object
     Set IE = CreateObject("InternetExplorer.Application")
 
     ' You can uncoment Next line To see form results
     IE.Visible = False
+    
+    ' old data for reference
+        ' Get data from selected cell and convert to string
+        ' tail_num = CStr(Range("A1").Value)
+        ' tail_num = CStr(ActiveCell.Value)
+    
+    ' Loop through range of cells
+    Set selectedRange = Application.Selection
+    For Each cel In selectedRange.Cells
+        ' increment by one
+        i = i + 1
+        
+        ' URL to get data from
+        IE.navigate "https://registry.faa.gov/aircraftinquiry/NNum_Results.aspx?NNumbertxt=" + CStr(cel)
+    
+        ' Statusbar
+        Application.StatusBar = "Loading, Please wait..."
 
-    ' Get data from selected cell and convert to string
-    ' tail_num = CStr(Range("A1").Value)
-    tail_num = CStr(ActiveCell.Value)
-    ' URL to get data from
-    IE.navigate "https://registry.faa.gov/aircraftinquiry/NNum_Results.aspx?NNumbertxt=" + CStr(tail_num)
+        ' Wait while IE loading...
+        Do While IE.Busy
+            Application.Wait DateAdd("s", 1, Now)
+        Loop
 
-    ' Statusbar
-    Application.StatusBar = "Loading, Please wait..."
+        Application.StatusBar = "Searching for value. Please wait..."
+        
+        'if website cannot be accessed, redirect to eh
+        On Error GoTo eh
+    
+        Dim dd As String
+        dd = IE.document.getElementById("ctl00_content_Label17").innerText
+        
+        ' Output will input data in cells on same row
+        output = "B" + CStr(i)
+        Range(output).Value = dd
+        ' MsgBox "MFR Year for " + cel + " = " + dd
+        
+        ' NEED TO UPDATE FOR:
+        ' AircraftMakeModel
+        ' AircraftType
+        ' TailNumber
+        ' AircraftYear
+        ' RegisteredName
+        ' RegistrationExpires
 
-    ' Wait while IE loading...
-    Do While IE.Busy
-        Application.Wait DateAdd("s", 1, Now)
-    Loop
+        
+    Next cel
+Done:
+        Exit Sub
+eh:
+        MsgBox "Please search FAA website." & Chr(13) & "Plane may be deregistered."
+    
+        ' Show IE
+        IE.Visible = False
 
-    Application.StatusBar = "Searching for value. Please wait..."
+        ' Clean up
+        Set IE = Nothing
 
-    Dim dd As String
-    dd = IE.document.getElementById("ctl00_content_Label17").innerText
+        Application.StatusBar = ""
 
-    MsgBox "MFR Year for " + tail_num + " = " + dd
-
-    ' Show IE
-    IE.Visible = False
-
-    ' Clean up
-    Set IE = Nothing
-
-    Application.StatusBar = ""
 End Sub
