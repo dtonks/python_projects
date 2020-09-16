@@ -1,4 +1,4 @@
-Sub FAA_Registry()
+Sub FAA_Registry_Search()
 
     Dim IE As Object
     Dim cel As Range
@@ -6,17 +6,11 @@ Sub FAA_Registry()
     Dim i As Integer
     Dim output As String
     
-    
     ' Create InternetExplorer Object
     Set IE = CreateObject("InternetExplorer.Application")
 
     ' You can uncoment Next line To see form results
     IE.Visible = False
-    
-    ' old data for reference
-        ' Get data from selected cell and convert to string
-        ' tail_num = CStr(Range("A1").Value)
-        ' tail_num = CStr(ActiveCell.Value)
         
     ' Finding the selected row number so the formula knows where to output to.
     Dim trial As String
@@ -28,13 +22,8 @@ Sub FAA_Registry()
     Set selectedRange = Application.Selection
     For Each cel In selectedRange.Cells
     
+        ' Increment i by one to write on correct row
         i = i + 1
-        ' Start on selected row and increment by 1
-        ' Dim trial As String
-        ' trial = ActiveCell.Address
-        ' TrialIndex = Mid(trial, 4, 1)
-        ' i = TrialIndex
-        ' i = i + 1
         
         ' URL to get data from
         IE.navigate "https://registry.faa.gov/aircraftinquiry/NNum_Results.aspx?NNumbertxt=" + CStr(cel)
@@ -55,31 +44,36 @@ Sub FAA_Registry()
         ' Search webpage by ID and output data to cells on same row
         Dim AircraftYear As String
         AircraftYear = IE.document.getElementById("ctl00_content_Label17").innerText
-        AircraftYearOutput = "E" + CStr(i)
+        AircraftYearOutput = "B" + CStr(i)
         Range(AircraftYearOutput).Value = AircraftYear
         
         Dim AircraftMake As String
-        AircraftMake = IE.document.getElementById("ctl00_content_lbMfrName").innerText
+        AircraftMake = UCase(IE.document.getElementById("ctl00_content_lbMfrName").innerText)
         
         Dim AircraftModel As String
-        AircraftModel = IE.document.getElementById("ctl00_content_Label7").innerText
+        AircraftModel = UCase(IE.document.getElementById("ctl00_content_Label7").innerText)
         
         Dim AircraftMakeModel As String
-        MakeModelOutput = "B" + CStr(i)
+        MakeModelOutput = "C" + CStr(i)
         Range(MakeModelOutput).Value = AircraftMake + AircraftModel
         
         Dim AircraftType As String
-        AircraftType = IE.document.getElementById("ctl00_content_Label11").innerText
-        AircraftTypeOutput = "C" + CStr(i)
-        Range(AircraftTypeOutput).Value = AircraftType
+        AircraftType = UCase(IE.document.getElementById("ctl00_content_Label11").innerText)
+        AircraftTypeOutput = "D" + CStr(i)
+        If AircraftType = "ROTORCRAFT" Then
+            AircraftType = "HELICOPTER"
+            Range(AircraftTypeOutput).Value = AircraftType
+        Else
+            Range(AircraftTypeOutput).Value = AircraftType
+        End If
 
         Dim TailNumber As String
         TailNumber = cel
-        TailNumberOutput = "D" + CStr(i)
+        TailNumberOutput = "E" + CStr(i)
         Range(TailNumberOutput).Value = TailNumber
 
         Dim RegisteredName As String
-        RegisteredName = IE.document.getElementById("ctl00_content_lbOwnerName").innerText
+        RegisteredName = UCase(IE.document.getElementById("ctl00_content_lbOwnerName").innerText)
         RegisteredNameOutput = "F" + CStr(i)
         Range(RegisteredNameOutput).Value = RegisteredName
         
@@ -87,14 +81,38 @@ Sub FAA_Registry()
         RegistrationExpires = IE.document.getElementById("ctl00_content_Label9").innerText
         RegistrationExpiresOutput = "G" + CStr(i)
         Range(RegistrationExpiresOutput).Value = RegistrationExpires
+
+        ' Added random Explorer search to fix a bug
+        ' where column G was not being noticed as an error
+        Dim thef As String
+        thef = IE.document.getElementById("ctl00_content_Label9").innerText
         
-        ' MsgBox "MFR Year for " + cel + " = " + dd
-        
-    Next cel
-Done:
+        Next cel
+' Done:
         Exit Sub
+        
 eh:
-        MsgBox "Please search FAA website." & Chr(13) & "Plane may be deregistered."
+        ' Will output "Search Manually" if FAA website data is not mineable
+        AircraftYearOutput = "B" + CStr(i)
+        Range(AircraftYearOutput).Value = "*Search Manually*"
+
+        MakeModelOutput = "C" + CStr(i)
+        Range(MakeModelOutput).Value = "*Search Manually*"
+        
+        AircraftTypeOutput = "D" + CStr(i)
+        Range(AircraftTypeOutput).Value = "*Search Manually*"
+
+        TailNumberOutput = "E" + CStr(i)
+        Range(TailNumberOutput).Value = cel
+
+        RegisteredNameOutput = "F" + CStr(i)
+        Range(RegisteredNameOutput).Value = "*Search Manually*"
+        
+        RegistrationExpiresOutput = "G" + CStr(i)
+        Range(RegistrationExpiresOutput).Value = "*Search Manually*"
+        
+        ' Go back into loop after error
+        Resume Next
         
         ' Show IE
         IE.Visible = False
